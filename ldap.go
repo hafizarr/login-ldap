@@ -4,15 +4,16 @@ import (
 	"fmt"
 
 	"github.com/go-ldap/ldap"
+	"github.com/sirupsen/logrus"
 )
 
 // const connection to server
 const (
-	ldapServer   = "ldap.forumsys.com"
+	ldapServer   = "localhost"
 	ldapPort     = 389
-	ldapBindDN   = "cn=read-only-admin,dc=example,dc=com"
+	ldapBindDN   = "cn=admin,dc=hafizarr,dc=id"
 	ldapPassword = "password"
-	ldapSearchDN = "dc=example,dc=com" // for operation search
+	ldapSearchDN = "dc=hafizarr,dc=id" // for operation search
 )
 
 type UserLDAPData struct {
@@ -27,6 +28,7 @@ func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
 	// ldap connection initialization, handshake to server directory
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
+		logrus.Error("ldap.Dial: ", err.Error())
 		return false, nil, err
 	}
 	defer l.Close()
@@ -34,6 +36,7 @@ func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
 	// bind operation
 	err = l.Bind(ldapBindDN, ldapPassword)
 	if err != nil {
+		logrus.Error("l.Bind: ", err.Error())
 		return false, nil, err
 	}
 
@@ -52,6 +55,7 @@ func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
 
 	sr, err := l.Search(searchRequest)
 	if err != nil {
+		logrus.Warn("l.Search: ", err.Error())
 		return false, nil, err
 	}
 
@@ -62,6 +66,7 @@ func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
 
 	err = l.Bind(entry.DN, password)
 	if err != nil {
+		logrus.Warn("l.Bind: ", err.Error())
 		return false, nil, err
 	}
 
